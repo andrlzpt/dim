@@ -14,6 +14,8 @@ const (
 	blockCellHeight = 4
 	textCellWidth   = 14
 	textCellHeight  = 26
+	worldCellWidth  = 7
+	worldCellHeight = 13
 )
 
 type Screen string
@@ -30,6 +32,7 @@ type AppState struct {
 	Paused      bool
 	Keyboard    window.Controls
 	Controllers []window.Controller
+	Arena       ArenaState
 }
 
 func main() {
@@ -37,13 +40,16 @@ func main() {
 	app := AppState{Screen: ScreenMain}
 	blocks := ascii.NewBuffer(windowWidth/blockCellWidth, windowHeight/blockCellHeight)
 	text := ascii.NewBuffer(windowWidth/textCellWidth, windowHeight/textCellHeight)
-
+	world := ascii.NewBuffer(
+		windowWidth/worldCellWidth,
+		windowHeight/worldCellHeight,
+	)
 	window.Run(window.Config{
 		Width: windowWidth, Height: windowHeight, Title: "New Game",
 	}, func(state *window.State) {
 		app.Keyboard = state.Keyboard
 		app.Controllers = state.Controllers
 		handleMenus(state, &app, text)
-		drawFrame(blocks, text, &app)
+		drawFrame(blocks, world, text, &app)
 	})
 }

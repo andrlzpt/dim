@@ -109,6 +109,7 @@ func handleMenus(state *window.State, app *AppState, text *ascii.Buffer) bool {
 
 func activateMenuItem(app *AppState) {
 	if app.Screen == ScreenMain {
+		app.Arena = newArena()
 		app.Screen = ScreenArena
 		app.Paused = false
 	} else if app.Paused {
