@@ -34,7 +34,10 @@ func drawFrame(blocks, world, text *ascii.Buffer, app *AppState) {
 // drawArena is the extension point for the new game's visuals.
 // Leaving both buffers clear produces an empty black arena.
 func drawArena(world *ascii.Buffer, app *AppState) {
-	const horizontalFOV = math.Pi / 3 // 60 degrees.
+	const (
+		horizontalFOV = math.Pi / 3
+		wallHeight    = 3.0
+	)
 
 	camera := app.Arena.Camera
 	forwardX := math.Cos(camera.Angle)
@@ -55,10 +58,29 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 		rayX := forwardX + planeX*screenX
 		rayY := forwardY + planeY*screenX
 
+		// Draw floor and ceiling first. Wall slices cover them below.
+		for y := 0; y < world.Height; y++ {
+			offset := float64(y) + 0.5 - horizon
+			if math.Abs(offset) < 0.001 {
+				continue
+			}
+
+			// The camera is halfway between floor and ceiling.
+			depth := (wallHeight / 2) * projection / math.Abs(offset)
+			surfaceX := camera.X + rayX*depth
+			surfaceY := camera.Y + rayY*depth
+
+			world.Set(x, y, surfaceGlyph(
+				surfaceX,
+				surfaceY,
+				depth,
+				offset < 0,
+			))
+		}
+
 		distance, side := castWall(&app.Arena, rayX, rayY)
 		distance = max(distance, 0.001)
 
-		const wallHeight = 3.0
 		height := wallHeight * projection / distance
 		top := horizon - height/2
 		bottom := horizon + height/2
@@ -84,4 +106,26 @@ func wallGlyph(distance float64, side bool) rune {
 
 	index := int(brightness * float64(len(shades)-1))
 	return rune(shades[index])
+}
+
+// surfaceGlyph gives world-space tiles alternating character densities.
+func surfaceGlyph(x, y, depth float64, ceiling bool) rune {
+	tileX := int(math.Floor(x))
+	tileY := int(math.Floor(y))
+	alternate := (tileX+tileY)%2 != 0
+
+	if ceiling {
+		if alternate || depth > 10 {
+			return ' '
+		}
+		return '.'
+	}
+
+	if depth > 10 {
+		return '.'
+	}
+	if alternate {
+		return ':'
+	}
+	return '.'
 }
