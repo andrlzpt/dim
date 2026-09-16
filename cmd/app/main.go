@@ -52,10 +52,11 @@ func main() {
 		app.Controllers = state.Controllers
 		menuHandled := handleMenus(state, &app, text)
 		if !menuHandled && app.Screen == ScreenArena && !app.Paused {
+			controls := arenaControls(&app)
 			app.Arena.Update(
-				app.Keyboard.MoveX,
-				app.Keyboard.MoveY,
-				app.Keyboard.SteerX,
+				controls.MoveX,
+				controls.MoveY,
+				controls.SteerX,
 				state.DeltaTime,
 			)
 		}

@@ -67,6 +67,7 @@ func readControllers() []Controller {
 			ID:   int(id),
 			Name: id.GetGamepadName(),
 			Controls: Controls{
+				MoveX:           axisValue(state.Axes[glfw.AxisLeftX]),
 				MoveY:           axisValue(state.Axes[glfw.AxisLeftY]),
 				SteerX:          axisValue(state.Axes[glfw.AxisRightX]),
 				SteerY:          axisValue(state.Axes[glfw.AxisRightY]),
