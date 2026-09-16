@@ -4,6 +4,7 @@ import (
 	"runtime"
 
 	"github.com/andrlzpt/dim/internal/ascii"
+	"github.com/andrlzpt/dim/internal/game"
 	"github.com/andrlzpt/dim/internal/window"
 )
 
@@ -32,7 +33,7 @@ type AppState struct {
 	Paused      bool
 	Keyboard    window.Controls
 	Controllers []window.Controller
-	Arena       ArenaState
+	Arena       game.Arena
 }
 
 func main() {
@@ -49,7 +50,16 @@ func main() {
 	}, func(state *window.State) {
 		app.Keyboard = state.Keyboard
 		app.Controllers = state.Controllers
-		handleMenus(state, &app, text)
+		menuHandled := handleMenus(state, &app, text)
+		if !menuHandled && app.Screen == ScreenArena && !app.Paused {
+			app.Arena.Update(
+				app.Keyboard.MoveX,
+				app.Keyboard.MoveY,
+				app.Keyboard.SteerX,
+				state.DeltaTime,
+			)
+		}
+
 		drawFrame(blocks, world, text, &app)
 	})
 }

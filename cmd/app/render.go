@@ -78,7 +78,7 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 			))
 		}
 
-		distance, side := castWall(&app.Arena, rayX, rayY)
+		distance, side := app.Arena.CastWall(rayX, rayY)
 		distance = max(distance, 0.001)
 
 		height := wallHeight * projection / distance

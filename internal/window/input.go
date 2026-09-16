@@ -3,6 +3,7 @@ package window
 import "github.com/go-gl/glfw/v3.4/glfw"
 
 type Controls struct {
+	MoveX           float64
 	MoveY           float64
 	SteerX          float64
 	SteerY          float64
@@ -31,16 +32,20 @@ func readKeyboard(w *glfw.Window) Controls {
 
 	if w.GetKey(glfw.KeyW) == glfw.Press {
 		controls.MoveY--
-		controls.SteerY--
 	}
 	if w.GetKey(glfw.KeyS) == glfw.Press {
 		controls.MoveY++
-		controls.SteerY++
 	}
 	if w.GetKey(glfw.KeyA) == glfw.Press {
-		controls.SteerX--
+		controls.MoveX--
 	}
 	if w.GetKey(glfw.KeyD) == glfw.Press {
+		controls.MoveX++
+	}
+	if w.GetKey(glfw.KeyLeft) == glfw.Press {
+		controls.SteerX--
+	}
+	if w.GetKey(glfw.KeyRight) == glfw.Press {
 		controls.SteerX++
 	}
 
