@@ -3,7 +3,8 @@ package ascii
 import "math/rand"
 
 type Cell struct {
-	Rune rune
+	Rune       rune
+	Brightness float32
 }
 
 type Buffer struct {
@@ -20,12 +21,21 @@ func NewBuffer(width, height int) *Buffer {
 	}
 }
 
+// Set writes a full-brightness character, suitable for menu text.
 func (b *Buffer) Set(x, y int, r rune) {
+	b.SetShaded(x, y, r, 1)
+}
+
+// SetShaded writes a character with brightness between zero and one.
+func (b *Buffer) SetShaded(x, y int, r rune, brightness float32) {
 	if !b.inBounds(x, y) {
 		return
 	}
 
-	b.Cells[b.index(x, y)].Rune = r
+	b.Cells[b.index(x, y)] = Cell{
+		Rune:       r,
+		Brightness: max(float32(0), min(brightness, float32(1))),
+	}
 }
 
 func (b *Buffer) At(x, y int) rune {

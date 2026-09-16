@@ -7,17 +7,23 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-// RenderText draws white glyphs over existing layers without clearing.
+// RenderText draws shaded glyphs over existing layers without clearing.
 // Call BeginFrame first. Use 7x13 cells or integer multiples such as 14x26.
 func RenderText(buffer *ascii.Buffer, config Config) {
-	gl.Color3f(1, 1, 1)
 	gl.Begin(gl.QUADS)
 	for y := 0; y < buffer.Height; y++ {
 		for x := 0; x < buffer.Width; x++ {
-			r := buffer.At(x, y)
-			if r != ' ' {
-				drawTextGlyph(x, y, r, config, nil)
+			cell := buffer.Cells[y*buffer.Width+x]
+			if cell.Rune == 0 || cell.Rune == ' ' || cell.Brightness <= 0 {
+				continue
 			}
+
+			gl.Color3f(
+				cell.Brightness,
+				cell.Brightness,
+				cell.Brightness,
+			)
+			drawTextGlyph(x, y, cell.Rune, config, nil)
 		}
 	}
 	gl.End()

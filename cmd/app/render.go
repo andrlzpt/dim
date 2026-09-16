@@ -31,8 +31,7 @@ func drawFrame(blocks, world, text *ascii.Buffer, app *AppState) {
 	})
 }
 
-// drawArena is the extension point for the new game's visuals.
-// Leaving both buffers clear produces an empty black arena.
+// drawArena projects the room into the world character buffer.
 func drawArena(world *ascii.Buffer, app *AppState) {
 	const (
 		horizontalFOV = math.Pi / 3
@@ -44,11 +43,9 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 	forwardY := math.Sin(camera.Angle)
 	planeScale := math.Tan(horizontalFOV / 2)
 
-	// The camera plane points to the right of the viewing direction.
 	planeX := -forwardY * planeScale
 	planeY := forwardX * planeScale
 
-	// Convert the projection distance from pixels to character rows.
 	projection := float64(world.Width*worldCellWidth) /
 		(2 * planeScale * float64(worldCellHeight))
 	horizon := float64(world.Height) / 2
@@ -57,75 +54,72 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 		screenX := 2*(float64(x)+0.5)/float64(world.Width) - 1
 		rayX := forwardX + planeX*screenX
 		rayY := forwardY + planeY*screenX
+		rayLength := math.Hypot(rayX, rayY)
 
-		// Draw floor and ceiling first. Wall slices cover them below.
+		// Draw quiet floor and ceiling surfaces behind the walls.
 		for y := 0; y < world.Height; y++ {
 			offset := float64(y) + 0.5 - horizon
 			if math.Abs(offset) < 0.001 {
 				continue
 			}
 
-			// The camera is halfway between floor and ceiling.
 			depth := (wallHeight / 2) * projection / math.Abs(offset)
 			surfaceX := camera.X + rayX*depth
 			surfaceY := camera.Y + rayY*depth
 
-			world.Set(x, y, surfaceGlyph(
+			// Use actual horizontal distance for fading.
+			distance := depth * rayLength
+			brightness := surfaceBrightness(
 				surfaceX,
 				surfaceY,
-				depth,
+				distance,
 				offset < 0,
-			))
+			)
+			world.SetShaded(x, y, '.', brightness)
 		}
 
-		distance, side := app.Arena.CastWall(rayX, rayY)
-		distance = max(distance, 0.001)
+		depth, side := app.Arena.CastWall(rayX, rayY)
+		depth = max(depth, 0.001)
 
-		height := wallHeight * projection / distance
+		height := wallHeight * projection / depth
 		top := horizon - height/2
 		bottom := horizon + height/2
 
-		// Include rows whose centers fall inside the wall slice.
 		start := max(0, int(math.Ceil(top-0.5)))
 		end := min(world.Height, int(math.Ceil(bottom-0.5)))
-		glyph := wallGlyph(distance, side)
+
+		brightness := worldBrightness(depth * rayLength)
+		if side {
+			brightness *= 0.75
+		}
 
 		for y := start; y < end; y++ {
-			world.Set(x, y, glyph)
+			world.SetShaded(x, y, '+', brightness)
 		}
 	}
 }
 
-func wallGlyph(distance float64, side bool) rune {
-	const shades = ".:-=+*#%@"
+// worldBrightness fades soft gray smoothly toward black.
+func worldBrightness(distance float64) float32 {
+	const (
+		nearBrightness = 0.65
+		fadeDistance   = 12.0
+	)
 
-	brightness := 1 / (1 + distance*0.18)
-	if side {
-		brightness *= 0.7
-	}
-
-	index := int(brightness * float64(len(shades)-1))
-	return rune(shades[index])
+	t := max(0.0, min(distance/fadeDistance, 1.0))
+	fade := 1 - t*t*(3-2*t)
+	return float32(nearBrightness * fade)
 }
 
-// surfaceGlyph gives world-space tiles alternating character densities.
-func surfaceGlyph(x, y, depth float64, ceiling bool) rune {
-	tileX := int(math.Floor(x))
-	tileY := int(math.Floor(y))
-	alternate := (tileX+tileY)%2 != 0
+// surfaceBrightness keeps surfaces quieter than walls.
+func surfaceBrightness(x, y, distance float64, ceiling bool) float32 {
+	brightness := worldBrightness(distance)
 
 	if ceiling {
-		if alternate || depth > 10 {
-			return ' '
-		}
-		return '.'
+		return brightness * 0.25
 	}
 
-	if depth > 10 {
-		return '.'
-	}
-	if alternate {
-		return ':'
-	}
-	return '.'
+	// Broad, gentle variations provide movement cues without hard tile edges.
+	pattern := 0.9 + 0.1*math.Cos(x*math.Pi/2)*math.Cos(y*math.Pi/2)
+	return brightness * 0.5 * float32(pattern)
 }
