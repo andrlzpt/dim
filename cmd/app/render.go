@@ -1,8 +1,8 @@
 package main
 
 import (
-	"example.com/game/internal/ascii"
-	"example.com/game/internal/renderer"
+	"github.com/andrlzpt/dim/internal/ascii"
+	"github.com/andrlzpt/dim/internal/renderer"
 )
 
 func drawFrame(blocks, text *ascii.Buffer, app *AppState) {

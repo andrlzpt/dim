@@ -1,7 +1,7 @@
 package renderer
 
 import (
-	"example.com/game/internal/ascii"
+	"github.com/andrlzpt/dim/internal/ascii"
 	"github.com/go-gl/gl/v3.2-compatibility/gl"
 )
 

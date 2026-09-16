@@ -1,4 +1,4 @@
-module example.com/game
+module github.com/andrlzpt/dim
 
 go 1.26.3
 

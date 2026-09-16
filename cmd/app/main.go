@@ -3,8 +3,8 @@ package main
 import (
 	"runtime"
 
-	"example.com/game/internal/ascii"
-	"example.com/game/internal/window"
+	"github.com/andrlzpt/dim/internal/ascii"
+	"github.com/andrlzpt/dim/internal/window"
 )
 
 const (
