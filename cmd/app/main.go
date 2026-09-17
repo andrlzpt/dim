@@ -9,14 +9,15 @@ import (
 )
 
 const (
-	windowWidth     = 840
-	windowHeight    = 624
-	blockCellWidth  = 4
-	blockCellHeight = 4
-	textCellWidth   = 14
-	textCellHeight  = 26
-	worldCellWidth  = 7
-	worldCellHeight = 13
+	windowWidth      = 840
+	windowHeight     = 624
+	blockCellWidth   = 4
+	blockCellHeight  = 4
+	textCellWidth    = 14
+	textCellHeight   = 26
+	worldCellWidth   = 7
+	worldCellHeight  = 13
+	mouseSensitivity = 0.0025
 )
 
 type Screen string
@@ -50,8 +51,28 @@ func main() {
 	}, func(state *window.State) {
 		app.Keyboard = state.Keyboard
 		app.Controllers = state.Controllers
-		menuHandled := handleMenus(state, &app, text)
-		if !menuHandled && app.Screen == ScreenArena && !app.Paused {
+
+		// Losing focus pauses gameplay. Returning requires an explicit resume.
+		if (state.FocusLost || !state.Focused) && app.Screen == ScreenArena {
+			app.Paused = true
+			app.MenuItem = 0
+		}
+
+		menuHandled := true
+		if state.Focused && !state.FocusLost {
+			menuHandled = handleMenus(state, &app, text)
+		}
+
+		active := state.Focused &&
+			!state.FocusLost &&
+			app.Screen == ScreenArena &&
+			!app.Paused
+
+		state.CaptureMouse = active
+
+		if active && !menuHandled {
+			app.Arena.Look(state.MouseDeltaX * mouseSensitivity)
+
 			controls := arenaControls(&app)
 			app.Arena.Update(
 				controls.MoveX,

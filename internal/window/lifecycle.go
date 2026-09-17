@@ -20,6 +20,10 @@ type State struct {
 	MouseMoved          bool
 	PausePressed        bool
 	BackPressed         bool
+	Focused             bool
+	FocusLost           bool
+	CaptureMouse        bool
+	MouseDeltaX         float64
 }
 
 type Config struct {
@@ -47,7 +51,13 @@ func Run(config Config, loop Loop) {
 		state.IsMouseInsideWindow = entered
 	})
 
-	var previousUp, previousDown, previousConfirm, previousMouse, previousPause bool
+	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
+		if !focused {
+			state.FocusLost = true
+		}
+	})
+
+	var previousUp, previousDown, previousConfirm, previousMouse, previousPause, mouseCaptured, mouseReady bool
 	controllerMenus := controllerMenuTracker{}
 	lastTime := glfw.GetTime()
 
@@ -58,12 +68,22 @@ func Run(config Config, loop Loop) {
 		state.FrameCount++
 		lastTime = currentTime
 
-		x, y := window.GetCursorPos()
+		state.Focused = window.GetAttrib(glfw.Focused) == glfw.True
 
-		state.MouseMoved = x != state.MouseX || y != state.MouseY
+		x, y := window.GetCursorPos()
+		state.MouseDeltaX = 0
+		state.MouseMoved = false
+
+		if mouseReady && state.Focused && !state.FocusLost {
+			state.MouseMoved = x != state.MouseX || y != state.MouseY
+			if mouseCaptured {
+				state.MouseDeltaX = x - state.MouseX
+			}
+		}
 
 		state.MouseX = x
 		state.MouseY = y
+		mouseReady = state.Focused && !state.FocusLost
 
 		up := window.GetKey(glfw.KeyUp) == glfw.Press
 		down := window.GetKey(glfw.KeyDown) == glfw.Press
@@ -89,6 +109,23 @@ func Run(config Config, loop Loop) {
 		controllerMenus.addPresses(&state)
 
 		loop(&state)
+
+		capture := state.CaptureMouse && state.Focused
+		if capture != mouseCaptured {
+			mode := glfw.CursorNormal
+			if capture {
+				mode = glfw.CursorDisabled
+			}
+			window.SetInputMode(glfw.CursorMode, mode)
+			mouseCaptured = capture
+
+			// Ignore cursor repositioning caused by changing capture mode.
+			mouseReady = false
+			state.MouseDeltaX = 0
+			state.MouseX, state.MouseY = window.GetCursorPos()
+		}
+
+		state.FocusLost = false
 		window.SwapBuffers()
 		glfw.PollEvents()
 	}

@@ -50,3 +50,11 @@ func (arena *Arena) Update(moveX, moveY, turn, deltaTime float64) {
 		}
 	}
 }
+
+// Look rotates the camera by an angle in radians.
+func (arena *Arena) Look(angle float64) {
+	arena.Camera.Angle = math.Remainder(
+		arena.Camera.Angle+angle,
+		2*math.Pi,
+	)
+}
