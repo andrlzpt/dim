@@ -7,6 +7,11 @@ import (
 	"github.com/andrlzpt/dim/internal/renderer"
 )
 
+const (
+	nearBrightness    = 0.65
+	worldViewDistance = 12.0
+)
+
 func drawFrame(blocks, world, text *ascii.Buffer, app *AppState) {
 	blocks.Clear()
 	world.Clear()
@@ -81,7 +86,11 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 			world.SetShaded(x, y, '.', brightness)
 		}
 
-		depth, side := app.Arena.CastWall(rayX, rayY)
+		depth, side, hit := app.Arena.CastWall(rayX, rayY, worldViewDistance)
+		if !hit {
+			continue
+		}
+
 		depth = max(depth, 0.001)
 
 		height := wallHeight * projection / depth
@@ -104,12 +113,8 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 
 // worldBrightness fades soft gray smoothly toward black.
 func worldBrightness(distance float64) float32 {
-	const (
-		nearBrightness = 0.65
-		fadeDistance   = 12.0
-	)
 
-	t := max(0.0, min(distance/fadeDistance, 1.0))
+	t := max(0.0, min(distance/worldViewDistance, 1.0))
 	fade := 1 - t*t*(3-2*t)
 	return float32(nearBrightness * fade)
 }

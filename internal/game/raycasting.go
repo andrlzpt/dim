@@ -6,10 +6,22 @@ import "math"
 // It returns t for the intersection Camera + t*ray.
 // With camera-plane rays, t is perpendicular camera depth.
 // The boolean reports crossing a horizontal grid boundary.
-func (arena *Arena) CastWall(rayX, rayY float64) (float64, bool) {
+// maxDistance limits actual horizontal world distance, not camera depth.
+func (arena *Arena) CastWall(rayX, rayY, maxDistance float64) (float64, bool, bool) {
+	rayLength := math.Hypot(rayX, rayY)
+	if rayLength == 0 || maxDistance <= 0 {
+		return 0, false, false
+	}
+
+	maxDepth := maxDistance / rayLength
+
 	camera := arena.Camera
 	cellX := int(math.Floor(camera.X))
 	cellY := int(math.Floor(camera.Y))
+
+	if arena.isWall(cellX, cellY) {
+		return 0, false, true
+	}
 
 	stepX, stepY := 1, 1
 	deltaX, deltaY := math.Inf(1), math.Inf(1)
@@ -33,27 +45,26 @@ func (arena *Arena) CastWall(rayX, rayY float64) (float64, bool) {
 		nextY = (float64(cellY+1) - camera.Y) * deltaY
 	}
 
-	if arena.isWall(cellX, cellY) || (rayX == 0 && rayY == 0) {
-		return 0, false
-	}
-
 	for {
-		var distance float64
+		var depth float64
 		var side bool
 
 		if nextX < nextY {
-			distance = nextX
+			depth = nextX
 			nextX += deltaX
 			cellX += stepX
 		} else {
-			distance = nextY
+			depth = nextY
 			nextY += deltaY
 			cellY += stepY
 			side = true
 		}
 
+		if depth >= maxDepth {
+			return maxDepth, false, false
+		}
 		if arena.isWall(cellX, cellY) {
-			return distance, side
+			return depth, side, true
 		}
 	}
 }

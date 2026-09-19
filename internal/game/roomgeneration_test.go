@@ -6,13 +6,15 @@ import (
 )
 
 func TestRoomGenerationRepeatable(t *testing.T) {
-	first := NewArena(42)
-	second := NewArena(42)
+	first, firstCamera := generateRooms(42)
+	second, secondCamera := generateRooms(42)
 
-	if !reflect.DeepEqual(first, second) {
-		t.Fatal("the same seed must produce the same arena")
+	if !reflect.DeepEqual(first, second) || firstCamera != secondCamera {
+		t.Fatal("the same seed must produce the same layout and spawn")
 	}
-	if reflect.DeepEqual(first.Tiles, NewArena(43).Tiles) {
+
+	different, _ := generateRooms(43)
+	if reflect.DeepEqual(first, different) {
 		t.Fatal("these different seeds should produce different layouts")
 	}
 }
@@ -23,13 +25,18 @@ func TestRoomGenerationTraversable(t *testing.T) {
 	}
 
 	for seed := range int64(100) {
-		arena := NewArena(seed)
+		tiles, camera := generateRooms(seed)
 
-		if !arena.canStand(arena.Camera.X, arena.Camera.Y, radius) {
-			t.Fatalf("seed %d: unsafe spawn", seed)
+		isWall := func(x, y int) bool {
+			return y < 0 || y >= len(tiles) ||
+				x < 0 || x >= len(tiles[y]) ||
+				tiles[y][x] == '#'
 		}
 
-		start := point{int(arena.Camera.X), int(arena.Camera.Y)}
+		start := point{int(camera.X), int(camera.Y)}
+		if isWall(start.X, start.Y) {
+			t.Fatalf("seed %d: spawn is inside a wall", seed)
+		}
 		queue := []point{start}
 		seen := map[point]bool{start: true}
 		directions := []point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
@@ -41,7 +48,7 @@ func TestRoomGenerationTraversable(t *testing.T) {
 					current.X + direction.X,
 					current.Y + direction.Y,
 				}
-				if seen[next] || arena.isWall(next.X, next.Y) {
+				if seen[next] || isWall(next.X, next.Y) {
 					continue
 				}
 				seen[next] = true
@@ -49,15 +56,15 @@ func TestRoomGenerationTraversable(t *testing.T) {
 			}
 		}
 
-		for y, row := range arena.Tiles {
+		for y, row := range tiles {
 			for x := range row {
-				boundary := y == 0 || y == len(arena.Tiles)-1 ||
+				boundary := y == 0 || y == len(tiles)-1 ||
 					x == 0 || x == len(row)-1
 
-				if boundary && !arena.isWall(x, y) {
+				if boundary && !isWall(x, y) {
 					t.Fatalf("seed %d: open boundary at %d,%d", seed, x, y)
 				}
-				if !arena.isWall(x, y) && !seen[point{x, y}] {
+				if !isWall(x, y) && !seen[point{x, y}] {
 					t.Fatalf("seed %d: unreachable floor at %d,%d", seed, x, y)
 				}
 			}

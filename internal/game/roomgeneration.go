@@ -81,7 +81,7 @@ func generateRooms(seed int64) ([]string, Camera) {
 	return tiles, camera
 }
 
-// carveArea opens a rectangle. Callers keep it inside the outer walls.
+// carveArea opens a rectangle within the grid's bounds.
 func carveArea(grid [][]byte, x, y, width, height int) {
 	for row := y; row < y+height; row++ {
 		for column := x; column < x+width; column++ {

@@ -51,6 +51,7 @@ func (arena *Arena) Update(moveX, moveY, turn, deltaTime float64) {
 			camera.Y += dy
 		}
 	}
+	arena.loadNearbyChunks()
 }
 
 // Look rotates the camera by an angle in radians.
