@@ -6,8 +6,8 @@ const (
 	moveSpeed = 2.5
 	turnSpeed = 2.0
 	radius    = 0.2
-	minTilt   = -0.25
-	maxTilt   = 0.20
+	minTilt   = -0.5
+	maxTilt   = 0.5
 )
 
 // Update advances the player using movement input and elapsed seconds.

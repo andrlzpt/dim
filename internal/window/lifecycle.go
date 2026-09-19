@@ -25,12 +25,17 @@ type State struct {
 	CaptureMouse        bool
 	MouseDeltaX         float64
 	MouseDeltaY         float64
+	Width               int
+	Height              int
+	FramebufferWidth    int
+	FramebufferHeight   int
 }
 
 type Config struct {
-	Width  int
-	Height int
-	Title  string
+	Width      int
+	Height     int
+	Title      string
+	FitDisplay bool
 }
 
 func Run(config Config, loop Loop) {
@@ -39,11 +44,37 @@ func Run(config Config, loop Loop) {
 		panic(err)
 	}
 	defer glfw.Terminate()
+	var workX, workY, workWidth, workHeight int
+
+	if config.FitDisplay {
+		if monitor := glfw.GetPrimaryMonitor(); monitor != nil {
+			workX, workY, workWidth, workHeight = monitor.GetWorkarea()
+			if workWidth > 0 && workHeight > 0 {
+				config.Width = max(1, workWidth*9/10)
+				config.Height = max(1, workHeight*9/10)
+			}
+		}
+	}
+
 	glfw.WindowHint(glfw.Resizable, glfw.False)
-	glfw.WindowHint(glfw.Floating, glfw.True)
-	window, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
+
+	window, err := glfw.CreateWindow(
+		config.Width,
+		config.Height,
+		config.Title,
+		nil,
+		nil,
+	)
 	if err != nil {
 		panic(err)
+	}
+	defer window.Destroy()
+
+	if config.FitDisplay && workWidth > 0 && workHeight > 0 {
+		window.SetPos(
+			workX+(workWidth-config.Width)/2,
+			workY+(workHeight-config.Height)/2,
+		)
 	}
 
 	window.MakeContextCurrent()
@@ -68,6 +99,8 @@ func Run(config Config, loop Loop) {
 		state.ElapsedTime = currentTime
 		state.FrameCount++
 		lastTime = currentTime
+		state.Width, state.Height = window.GetSize()
+		state.FramebufferWidth, state.FramebufferHeight = window.GetFramebufferSize()
 
 		state.Focused = window.GetAttrib(glfw.Focused) == glfw.True
 

@@ -21,18 +21,18 @@ func drawFrame(blocks, world, text *ascii.Buffer, app *AppState) {
 	}
 	drawAppMenu(text, app)
 
-	renderer.BeginFrame(windowWidth, windowHeight)
+	renderer.BeginFrame(app.FramebufferWidth, app.FramebufferHeight)
 	renderer.RenderBlocks(blocks, renderer.Config{
 		WindowWidth: windowWidth, WindowHeight: windowHeight,
 		CellWidth: blockCellWidth, CellHeight: blockCellHeight,
 	})
 	renderer.RenderText(world, renderer.Config{
-		WindowWidth: windowWidth, WindowHeight: windowHeight,
+		WindowWidth: app.Width, WindowHeight: app.Height,
 		CellWidth: worldCellWidth, CellHeight: worldCellHeight,
 		GlyphWidth: worldGlyphWidth, GlyphHeight: worldGlyphHeight,
 	})
 	renderer.RenderText(text, renderer.Config{
-		WindowWidth: windowWidth, WindowHeight: windowHeight,
+		WindowWidth: app.Width, WindowHeight: app.Height,
 		CellWidth: textCellWidth, CellHeight: textCellHeight,
 	})
 }
