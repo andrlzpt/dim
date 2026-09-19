@@ -9,14 +9,16 @@ import (
 )
 
 const (
-	windowWidth          = 840
-	windowHeight         = 624
+	windowWidth          = 1260
+	windowHeight         = 936
 	blockCellWidth       = 4
 	blockCellHeight      = 4
 	textCellWidth        = 14
 	textCellHeight       = 26
-	worldCellWidth       = 7
-	worldCellHeight      = 13
+	worldCellWidth       = 6
+	worldCellHeight      = 11
+	worldGlyphWidth      = 7
+	worldGlyphHeight     = 13
 	mouseSensitivity     = 0.0025
 	mouseTiltSensitivity = 0.0005
 	controllerTiltSpeed  = 0.25

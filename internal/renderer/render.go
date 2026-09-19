@@ -9,6 +9,8 @@ type Config struct {
 	WindowHeight int
 	CellWidth    int
 	CellHeight   int
+	GlyphWidth   int
+	GlyphHeight  int
 }
 
 var initialized = false

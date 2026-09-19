@@ -24,6 +24,7 @@ func drawFrame(blocks, world, text *ascii.Buffer, app *AppState) {
 	renderer.RenderText(world, renderer.Config{
 		WindowWidth: windowWidth, WindowHeight: windowHeight,
 		CellWidth: worldCellWidth, CellHeight: worldCellHeight,
+		GlyphWidth: worldGlyphWidth, GlyphHeight: worldGlyphHeight,
 	})
 	renderer.RenderText(text, renderer.Config{
 		WindowWidth: windowWidth, WindowHeight: windowHeight,

@@ -73,8 +73,18 @@ func drawTextGlyph(cellX, cellY int, r rune, config Config, transform func(float
 		bounds, mask, maskPoint, _, _ = face.Glyph(baseline, '?')
 	}
 
-	scaleX := float32(config.CellWidth) / float32(face.Advance)
-	scaleY := float32(config.CellHeight) / float32(face.Height)
+	glyphWidth := config.GlyphWidth
+	if glyphWidth <= 0 {
+		glyphWidth = config.CellWidth
+	}
+
+	glyphHeight := config.GlyphHeight
+	if glyphHeight <= 0 {
+		glyphHeight = config.CellHeight
+	}
+
+	scaleX := float32(glyphWidth) / float32(face.Advance)
+	scaleY := float32(glyphHeight) / float32(face.Height)
 	originX := float32(cellX * config.CellWidth)
 	originY := float32(cellY * config.CellHeight)
 
