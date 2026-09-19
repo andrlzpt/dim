@@ -6,6 +6,8 @@ type Camera struct {
 	X     float64
 	Y     float64
 	Angle float64
+	Tilt  float64 // Fraction of screen height; positive looks up.
+
 }
 
 // Arena holds the room layout and the player's viewpoint.

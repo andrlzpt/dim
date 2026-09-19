@@ -2,14 +2,16 @@ package game
 
 import "math"
 
+const (
+	moveSpeed = 2.5
+	turnSpeed = 2.0
+	radius    = 0.2
+	minTilt   = -0.25
+	maxTilt   = 0.20
+)
+
 // Update advances the player using movement input and elapsed seconds.
 func (arena *Arena) Update(moveX, moveY, turn, deltaTime float64) {
-	const (
-		moveSpeed = 2.5
-		turnSpeed = 2.0
-		radius    = 0.2
-	)
-
 	// Avoid a large jump after a stall or debugger pause.
 	dt := max(0.0, min(deltaTime, 0.1))
 	if dt == 0 {
@@ -52,9 +54,13 @@ func (arena *Arena) Update(moveX, moveY, turn, deltaTime float64) {
 }
 
 // Look rotates the camera by an angle in radians.
-func (arena *Arena) Look(angle float64) {
+func (arena *Arena) Look(angle, tilt float64) {
 	arena.Camera.Angle = math.Remainder(
 		arena.Camera.Angle+angle,
 		2*math.Pi,
+	)
+	arena.Camera.Tilt = max(
+		minTilt,
+		min(arena.Camera.Tilt+tilt, maxTilt),
 	)
 }

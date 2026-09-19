@@ -9,15 +9,17 @@ import (
 )
 
 const (
-	windowWidth      = 840
-	windowHeight     = 624
-	blockCellWidth   = 4
-	blockCellHeight  = 4
-	textCellWidth    = 14
-	textCellHeight   = 26
-	worldCellWidth   = 7
-	worldCellHeight  = 13
-	mouseSensitivity = 0.0025
+	windowWidth          = 840
+	windowHeight         = 624
+	blockCellWidth       = 4
+	blockCellHeight      = 4
+	textCellWidth        = 14
+	textCellHeight       = 26
+	worldCellWidth       = 7
+	worldCellHeight      = 13
+	mouseSensitivity     = 0.0025
+	mouseTiltSensitivity = 0.0005
+	controllerTiltSpeed  = 0.25
 )
 
 type Screen string
@@ -71,9 +73,18 @@ func main() {
 		state.CaptureMouse = active
 
 		if active && !menuHandled {
-			app.Arena.Look(state.MouseDeltaX * mouseSensitivity)
-
 			controls := arenaControls(&app)
+			dt := max(0.0, min(state.DeltaTime, 0.1))
+
+			// Mouse and stick Y are negative when pushed upward.
+			tilt := -state.MouseDeltaY*mouseTiltSensitivity -
+				controls.SteerY*controllerTiltSpeed*dt
+
+			app.Arena.Look(
+				state.MouseDeltaX*mouseSensitivity,
+				tilt,
+			)
+
 			app.Arena.Update(
 				controls.MoveX,
 				controls.MoveY,

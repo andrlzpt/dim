@@ -48,7 +48,9 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 
 	projection := float64(world.Width*worldCellWidth) /
 		(2 * planeScale * float64(worldCellHeight))
-	horizon := float64(world.Height) / 2
+
+	// Looking up moves the horizon down, revealing more ceiling.
+	horizon := float64(world.Height) * (0.5 + camera.Tilt)
 
 	for x := 0; x < world.Width; x++ {
 		screenX := 2*(float64(x)+0.5)/float64(world.Width) - 1

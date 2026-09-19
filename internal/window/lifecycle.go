@@ -24,6 +24,7 @@ type State struct {
 	FocusLost           bool
 	CaptureMouse        bool
 	MouseDeltaX         float64
+	MouseDeltaY         float64
 }
 
 type Config struct {
@@ -72,12 +73,14 @@ func Run(config Config, loop Loop) {
 
 		x, y := window.GetCursorPos()
 		state.MouseDeltaX = 0
+		state.MouseDeltaY = 0
 		state.MouseMoved = false
 
 		if mouseReady && state.Focused && !state.FocusLost {
 			state.MouseMoved = x != state.MouseX || y != state.MouseY
 			if mouseCaptured {
 				state.MouseDeltaX = x - state.MouseX
+				state.MouseDeltaY = y - state.MouseY
 			}
 		}
 
@@ -122,6 +125,7 @@ func Run(config Config, loop Loop) {
 			// Ignore cursor repositioning caused by changing capture mode.
 			mouseReady = false
 			state.MouseDeltaX = 0
+			state.MouseDeltaY = 0
 			state.MouseX, state.MouseY = window.GetCursorPos()
 		}
 
