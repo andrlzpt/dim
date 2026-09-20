@@ -59,19 +59,57 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 		rayY := forwardY + planeY*screenX
 		rayLength := math.Hypot(rayX, rayY)
 
-		// Draw quiet floor and ceiling surfaces behind the walls.
+		// Find and draw the wall before calculating other surfaces.
+		wallStart, wallEnd := 0, 0
+		depth, side, hit := app.Arena.CastWall(
+			rayX,
+			rayY,
+			worldViewDistance,
+		)
+
+		if hit {
+			depth = max(depth, 0.001)
+
+			height := wallHeight * projection / depth
+			top := horizon - height/2
+			bottom := horizon + height/2
+
+			wallStart = max(0, min(world.Height, int(math.Ceil(top-0.5))))
+			wallEnd = max(0, min(world.Height, int(math.Ceil(bottom-0.5))))
+
+			brightness := worldBrightness(depth * rayLength)
+			if side {
+				brightness *= 0.75
+			}
+
+			for y := wallStart; y < wallEnd; y++ {
+				world.SetShaded(x, y, '+', brightness)
+			}
+		}
+
 		for y := 0; y < world.Height; y++ {
+			// Jump past rows already covered by the wall.
+			if y >= wallStart && y < wallEnd {
+				y = wallEnd - 1
+				continue
+			}
+
 			offset := float64(y) + 0.5 - horizon
 			if math.Abs(offset) < 0.001 {
 				continue
 			}
 
-			depth := (wallHeight / 2) * projection / math.Abs(offset)
-			surfaceX := camera.X + rayX*depth
-			surfaceY := camera.Y + rayY*depth
+			surfaceDepth := (wallHeight / 2) * projection / math.Abs(offset)
+			distance := surfaceDepth * rayLength
 
-			// Use actual horizontal distance for fading.
-			distance := depth * rayLength
+			// These cells are fully black; the cleared buffer is sufficient.
+			if distance >= worldViewDistance {
+				continue
+			}
+
+			surfaceX := camera.X + rayX*surfaceDepth
+			surfaceY := camera.Y + rayY*surfaceDepth
+
 			brightness := surfaceBrightness(
 				surfaceX,
 				surfaceY,
@@ -79,29 +117,6 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 				offset < 0,
 			)
 			world.SetShaded(x, y, '.', brightness)
-		}
-
-		depth, side, hit := app.Arena.CastWall(rayX, rayY, worldViewDistance)
-		if !hit {
-			continue
-		}
-
-		depth = max(depth, 0.001)
-
-		height := wallHeight * projection / depth
-		top := horizon - height/2
-		bottom := horizon + height/2
-
-		start := max(0, int(math.Ceil(top-0.5)))
-		end := min(world.Height, int(math.Ceil(bottom-0.5)))
-
-		brightness := worldBrightness(depth * rayLength)
-		if side {
-			brightness *= 0.75
-		}
-
-		for y := start; y < end; y++ {
-			world.SetShaded(x, y, '+', brightness)
 		}
 	}
 }
