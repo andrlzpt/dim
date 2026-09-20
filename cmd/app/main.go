@@ -48,7 +48,7 @@ type AppState struct {
 func main() {
 	runtime.LockOSThread()
 	app := AppState{Screen: ScreenMain}
-	var blocks, world, text *ascii.Buffer
+	var world, text *ascii.Buffer
 
 	window.Run(window.Config{
 		Width:      windowWidth,
@@ -67,14 +67,9 @@ func main() {
 			return
 		}
 
-		if blocks == nil || app.Width != state.Width || app.Height != state.Height {
+		if app.Width != state.Width || app.Height != state.Height {
 			app.Width = state.Width
 			app.Height = state.Height
-
-			blocks = ascii.NewBuffer(
-				max(1, app.Width/blockCellWidth),
-				max(1, app.Height/blockCellHeight),
-			)
 			world = ascii.NewBuffer(
 				max(1, app.Width/worldCellWidth),
 				max(1, app.Height/worldCellHeight),
@@ -129,6 +124,6 @@ func main() {
 			)
 		}
 
-		drawFrame(blocks, world, text, &app)
+		drawFrame(world, text, &app)
 	})
 }

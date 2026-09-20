@@ -12,8 +12,7 @@ const (
 	worldViewDistance = 12.0
 )
 
-func drawFrame(blocks, world, text *ascii.Buffer, app *AppState) {
-	blocks.Clear()
+func drawFrame(world, text *ascii.Buffer, app *AppState) {
 	world.Clear()
 	text.Clear()
 	if app.Screen == ScreenArena {
@@ -22,10 +21,6 @@ func drawFrame(blocks, world, text *ascii.Buffer, app *AppState) {
 	drawAppMenu(text, app)
 
 	renderer.BeginFrame(app.FramebufferWidth, app.FramebufferHeight)
-	renderer.RenderBlocks(blocks, renderer.Config{
-		WindowWidth: windowWidth, WindowHeight: windowHeight,
-		CellWidth: blockCellWidth, CellHeight: blockCellHeight,
-	})
 	renderer.RenderText(world, renderer.Config{
 		WindowWidth: app.Width, WindowHeight: app.Height,
 		CellWidth: worldCellWidth, CellHeight: worldCellHeight,
