@@ -1,26 +1,31 @@
 package renderer
 
-import (
-	"github.com/andrlzpt/dim/internal/ascii"
-	"github.com/go-gl/gl/v3.2-compatibility/gl"
-	"golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
-)
+import "github.com/andrlzpt/dim/internal/ascii"
 
-// RenderText draws white glyphs over existing layers without clearing.
-// Call BeginFrame first. Use 7x13 cells or integer multiples such as 14x26.
+// RenderText draws a character buffer in one batch.
+// Call BeginFrame first.
 func RenderText(buffer *ascii.Buffer, config Config) {
-	gl.Color3f(1, 1, 1)
-	gl.Begin(gl.QUADS)
+	beginTextBatch()
+
 	for y := 0; y < buffer.Height; y++ {
 		for x := 0; x < buffer.Width; x++ {
-			r := buffer.At(x, y)
-			if r != ' ' {
-				drawTextGlyph(x, y, r, config, nil)
+			cell := buffer.Cells[y*buffer.Width+x]
+			if cell.Rune == 0 || cell.Rune == ' ' || cell.Brightness <= 0 {
+				continue
 			}
+
+			appendTextGlyph(
+				x,
+				y,
+				cell.Rune,
+				cell.Brightness,
+				config,
+				nil,
+			)
 		}
 	}
-	gl.End()
+
+	drawTextBatch()
 }
 
 // RenderTextLine draws a centered label at pixel coordinates.
@@ -49,51 +54,54 @@ func RenderTextLine(
 		return centerX + x, centerY + y
 	}
 
-	gl.Color3f(1, 1, 1)
-	gl.Begin(gl.QUADS)
+	beginTextBatch()
+
 	for x, r := range runes {
 		if r != ' ' {
-			drawTextGlyph(x, 0, r, config, transform)
+			appendTextGlyph(x, 0, r, 1, config, transform)
 		}
 	}
-	gl.End()
+
+	drawTextBatch()
 }
 
-func drawTextGlyph(cellX, cellY int, r rune, config Config, transform func(float32, float32) (float32, float32)) {
-	face := basicfont.Face7x13
-	baseline := fixed.P(0, face.Ascent)
-	bounds, mask, maskPoint, _, ok := face.Glyph(baseline, r)
-	if !ok {
-		bounds, mask, maskPoint, _, _ = face.Glyph(baseline, '?')
+// appendTextGlyph adds one textured rectangle without issuing GL calls.
+func appendTextGlyph(
+	cellX, cellY int,
+	r rune,
+	brightness float32,
+	config Config,
+	transform func(float32, float32) (float32, float32),
+) {
+	uv, found := fontAtlasGlyphs[r]
+	if !found {
+		uv = fontAtlasGlyphs['?']
 	}
 
-	scaleX := float32(config.CellWidth) / float32(face.Advance)
-	scaleY := float32(config.CellHeight) / float32(face.Height)
-	originX := float32(cellX * config.CellWidth)
-	originY := float32(cellY * config.CellHeight)
+	glyphWidth := config.GlyphWidth
+	if glyphWidth <= 0 {
+		glyphWidth = config.CellWidth
+	}
 
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			maskX := maskPoint.X + x - bounds.Min.X
-			maskY := maskPoint.Y + y - bounds.Min.Y
-			_, _, _, alpha := mask.At(maskX, maskY).RGBA()
-			if alpha == 0 {
-				continue
-			}
+	glyphHeight := config.GlyphHeight
+	if glyphHeight <= 0 {
+		glyphHeight = config.CellHeight
+	}
 
-			pixelX := originX + float32(x)*scaleX
-			pixelY := originY + float32(y)*scaleY
-			vertex := func(x, y float32) {
-				if transform != nil {
-					x, y = transform(x, y)
-				}
-				gl.Vertex2f(pixelToClipX(x, config), pixelToClipY(y, config))
-			}
+	left := float32(cellX * config.CellWidth)
+	top := float32(cellY * config.CellHeight)
+	right := left + float32(glyphWidth)
+	bottom := top + float32(glyphHeight)
 
-			vertex(pixelX, pixelY)
-			vertex(pixelX+scaleX, pixelY)
-			vertex(pixelX+scaleX, pixelY+scaleY)
-			vertex(pixelX, pixelY+scaleY)
+	vertex := func(x, y, u, v float32) {
+		if transform != nil {
+			x, y = transform(x, y)
 		}
+		appendTextVertex(x, y, u, v, brightness, config)
 	}
+
+	vertex(left, top, uv.Left, uv.Top)
+	vertex(right, top, uv.Right, uv.Top)
+	vertex(right, bottom, uv.Right, uv.Bottom)
+	vertex(left, bottom, uv.Left, uv.Bottom)
 }
