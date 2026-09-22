@@ -10,7 +10,14 @@ import (
 const (
 	nearBrightness    = 0.65
 	worldViewDistance = 12.0
+	horizontalFOV     = math.Pi / 3
+	wallHeight        = 3.0
 )
+
+type surfaceRow struct {
+	Depth   float64
+	Ceiling bool
+}
 
 func drawFrame(world, text *ascii.Buffer, app *AppState) {
 	world.Clear()
@@ -34,11 +41,6 @@ func drawFrame(world, text *ascii.Buffer, app *AppState) {
 
 // drawArena projects the room into the world character buffer.
 func drawArena(world *ascii.Buffer, app *AppState) {
-	const (
-		horizontalFOV = math.Pi / 3
-		wallHeight    = 3.0
-	)
-
 	camera := app.Arena.Camera
 	forwardX := math.Cos(camera.Angle)
 	forwardY := math.Sin(camera.Angle)
@@ -52,6 +54,24 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 
 	// Looking up moves the horizon down, revealing more ceiling.
 	horizon := float64(world.Height) * (0.5 + camera.Tilt)
+
+	// Reuse storage unless the character grid changes height.
+	if len(app.surfaceRows) != world.Height {
+		app.surfaceRows = make([]surfaceRow, world.Height)
+	}
+
+	for y := range app.surfaceRows {
+		offset := float64(y) + 0.5 - horizon
+		row := surfaceRow{
+			Ceiling: offset < 0,
+		}
+
+		if math.Abs(offset) >= 0.001 {
+			row.Depth = (wallHeight / 2) * projection / math.Abs(offset)
+		}
+
+		app.surfaceRows[y] = row
+	}
 
 	for x := 0; x < world.Width; x++ {
 		screenX := 2*(float64(x)+0.5)/float64(world.Width) - 1
@@ -94,27 +114,25 @@ func drawArena(world *ascii.Buffer, app *AppState) {
 				continue
 			}
 
-			offset := float64(y) + 0.5 - horizon
-			if math.Abs(offset) < 0.001 {
+			row := app.surfaceRows[y]
+			if row.Depth == 0 {
 				continue
 			}
 
-			surfaceDepth := (wallHeight / 2) * projection / math.Abs(offset)
-			distance := surfaceDepth * rayLength
-
-			// These cells are fully black; the cleared buffer is sufficient.
+			// Ray length varies by column, so distance still does too.
+			distance := row.Depth * rayLength
 			if distance >= worldViewDistance {
 				continue
 			}
 
-			surfaceX := camera.X + rayX*surfaceDepth
-			surfaceY := camera.Y + rayY*surfaceDepth
+			surfaceX := camera.X + rayX*row.Depth
+			surfaceY := camera.Y + rayY*row.Depth
 
 			brightness := surfaceBrightness(
 				surfaceX,
 				surfaceY,
 				distance,
-				offset < 0,
+				row.Ceiling,
 			)
 			world.SetShaded(x, y, '.', brightness)
 		}

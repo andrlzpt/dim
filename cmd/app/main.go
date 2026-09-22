@@ -43,6 +43,8 @@ type AppState struct {
 	Height            int
 	FramebufferWidth  int
 	FramebufferHeight int
+
+	surfaceRows []surfaceRow
 }
 
 func main() {
