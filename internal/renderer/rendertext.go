@@ -4,7 +4,6 @@ import (
 	"github.com/andrlzpt/dim/internal/ascii"
 	"github.com/go-gl/gl/v3.2-compatibility/gl"
 	"golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
 )
 
 // RenderText draws shaded glyphs over existing layers without clearing.
@@ -67,11 +66,6 @@ func RenderTextLine(
 
 func drawTextGlyph(cellX, cellY int, r rune, config Config, transform func(float32, float32) (float32, float32)) {
 	face := basicfont.Face7x13
-	baseline := fixed.P(0, face.Ascent)
-	bounds, mask, maskPoint, _, ok := face.Glyph(baseline, r)
-	if !ok {
-		bounds, mask, maskPoint, _, _ = face.Glyph(baseline, '?')
-	}
 
 	glyphWidth := config.GlyphWidth
 	if glyphWidth <= 0 {
@@ -88,28 +82,23 @@ func drawTextGlyph(cellX, cellY int, r rune, config Config, transform func(float
 	originX := float32(cellX * config.CellWidth)
 	originY := float32(cellY * config.CellHeight)
 
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			maskX := maskPoint.X + x - bounds.Min.X
-			maskY := maskPoint.Y + y - bounds.Min.Y
-			_, _, _, alpha := mask.At(maskX, maskY).RGBA()
-			if alpha == 0 {
-				continue
-			}
-
-			pixelX := originX + float32(x)*scaleX
-			pixelY := originY + float32(y)*scaleY
-			vertex := func(x, y float32) {
-				if transform != nil {
-					x, y = transform(x, y)
-				}
-				gl.Vertex2f(pixelToClipX(x, config), pixelToClipY(y, config))
-			}
-
-			vertex(pixelX, pixelY)
-			vertex(pixelX+scaleX, pixelY)
-			vertex(pixelX+scaleX, pixelY+scaleY)
-			vertex(pixelX, pixelY+scaleY)
+	vertex := func(x, y float32) {
+		if transform != nil {
+			x, y = transform(x, y)
 		}
+		gl.Vertex2f(
+			pixelToClipX(x, config),
+			pixelToClipY(y, config),
+		)
+	}
+
+	for _, pixel := range cachedGlyphPixels(r) {
+		x := originX + pixel.X*scaleX
+		y := originY + pixel.Y*scaleY
+
+		vertex(x, y)
+		vertex(x+scaleX, y)
+		vertex(x+scaleX, y+scaleY)
+		vertex(x, y+scaleY)
 	}
 }
