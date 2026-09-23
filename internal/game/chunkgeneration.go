@@ -14,7 +14,8 @@ type chunkPosition struct {
 }
 
 type chunk struct {
-	Tiles []string
+	RoomID RoomID
+	Tiles  []string
 }
 
 func generateChunk(seed int64, position chunkPosition) chunk {
@@ -65,7 +66,13 @@ func generateChunk(seed int64, position chunkPosition) chunk {
 		tiles[y] = string(grid[y])
 	}
 
-	return chunk{Tiles: tiles}
+	return chunk{
+		RoomID: RoomID{
+			Seed: seed,
+			X:    position.X,
+		},
+		Tiles: tiles,
+	}
 }
 
 func carveVerticalConnection(grid [][]byte, x, fromY, toY int) {
