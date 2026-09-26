@@ -111,6 +111,11 @@ func handleMenus(state *window.State, app *AppState, text *ascii.Buffer) bool {
 func activateMenuItem(app *AppState) {
 	if app.Screen == ScreenMain {
 		app.Arena = game.NewArena(42)
+
+		if _, err := app.Arena.CreateCheckpoint("first-checkpoint", 3, -1); err != nil {
+			panic(err)
+		}
+
 		app.Screen = ScreenArena
 		app.Paused = false
 	} else if app.Paused {

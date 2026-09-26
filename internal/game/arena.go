@@ -19,6 +19,7 @@ type Arena struct {
 	seed         int64
 	chunks       map[chunkPosition]chunk
 	loadedCenter chunkPosition
+	checkpoints  map[string]Checkpoint
 }
 
 func NewArena(seed int64) Arena {
