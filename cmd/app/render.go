@@ -33,10 +33,15 @@ func drawFrame(world, text *ascii.Buffer, app *AppState) {
 		CellWidth: worldCellWidth, CellHeight: worldCellHeight,
 		GlyphWidth: worldGlyphWidth, GlyphHeight: worldGlyphHeight,
 	})
+
+	if app.Screen == ScreenArena && !app.Paused {
+		drawMinimap(app)
+	}
 	renderer.RenderText(text, renderer.Config{
 		WindowWidth: app.Width, WindowHeight: app.Height,
 		CellWidth: textCellWidth, CellHeight: textCellHeight,
 	})
+
 }
 
 // drawArena projects the room into the world character buffer.

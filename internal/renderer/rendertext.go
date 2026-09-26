@@ -3,9 +3,18 @@ package renderer
 import "github.com/andrlzpt/dim/internal/ascii"
 
 // RenderText draws a character buffer in one batch.
-// Call BeginFrame first.
 func RenderText(buffer *ascii.Buffer, config Config) {
+	RenderTextAt(buffer, 0, 0, config)
+}
+
+// RenderText draws a character buffer in one batch.
+// Call BeginFrame first.
+func RenderTextAt(buffer *ascii.Buffer, left, top float32, config Config) {
 	beginTextBatch()
+
+	transform := func(x, y float32) (float32, float32) {
+		return left + x, top + y
+	}
 
 	for y := 0; y < buffer.Height; y++ {
 		for x := 0; x < buffer.Width; x++ {
@@ -20,7 +29,7 @@ func RenderText(buffer *ascii.Buffer, config Config) {
 				cell.Rune,
 				cell.Brightness,
 				config,
-				nil,
+				transform,
 			)
 		}
 	}
