@@ -14,8 +14,10 @@ type chunkPosition struct {
 }
 
 type chunk struct {
-	RoomID RoomID
-	Tiles  []string
+	RoomID   RoomID
+	Bounds   room
+	Landmark LandmarkKind
+	Tiles    []string
 }
 
 func generateChunk(seed int64, position chunkPosition) chunk {
@@ -37,6 +39,13 @@ func generateChunk(seed int64, position chunkPosition) chunk {
 	x := (chunkSize-width)/2 + random.Intn(3) - 1
 	y := (chunkSize-height)/2 + random.Intn(3) - 1
 	carveArea(grid, x, y, width, height)
+
+	bounds := room{
+		X:      x,
+		Y:      y,
+		Width:  width,
+		Height: height,
+	}
 
 	center := chunkSize / 2
 
@@ -61,6 +70,8 @@ func generateChunk(seed int64, position chunkPosition) chunk {
 	carveArea(grid, south, center, 2, chunkSize-center)
 	carveHorizontalConnection(grid, south, center, center)
 
+	landmark := generateRoomLandmark(seed, position, grid, bounds)
+
 	tiles := make([]string, chunkSize)
 	for y := range grid {
 		tiles[y] = string(grid[y])
@@ -70,8 +81,11 @@ func generateChunk(seed int64, position chunkPosition) chunk {
 		RoomID: RoomID{
 			Seed: seed,
 			X:    position.X,
+			Y:    position.Y,
 		},
-		Tiles: tiles,
+		Bounds:   bounds,
+		Landmark: landmark,
+		Tiles:    tiles,
 	}
 }
 
