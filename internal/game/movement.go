@@ -52,6 +52,7 @@ func (arena *Arena) Update(moveX, moveY, turn, deltaTime float64) {
 		}
 	}
 	arena.loadNearbyChunks()
+	arena.discoverCurrentRoom()
 	arena.updateCheckpoints()
 }
 
