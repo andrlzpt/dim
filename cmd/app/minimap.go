@@ -95,7 +95,7 @@ func drawMinimap(app *AppState) {
 			return
 		}
 
-		buffer.SetShaded(column, row, glyph, brightness)
+		buffer.SetColored(column, row, glyph, minimapGlyphColor(glyph), brightness)
 	}
 
 	playerRoom := app.Arena.CurrentRoomPosition().Room
@@ -140,6 +140,8 @@ func drawMinimap(app *AppState) {
 			)
 		}
 	}
+
+	put(center, center, '@', 1)
 
 	checkpoint, found := app.Arena.Checkpoint(settings.CheckpointID)
 	if found {
@@ -188,7 +190,6 @@ func drawMinimap(app *AppState) {
 		minimapHeading(angle),
 		0.9,
 	)
-	put(center, center, '@', 1)
 
 	config := renderer.Config{
 		WindowWidth:  app.Width,
@@ -201,6 +202,8 @@ func drawMinimap(app *AppState) {
 		float32(left+radius),
 		float32(top+radius),
 		float32(radius),
+		minimapBackground,
+		minimapBorder,
 		config,
 	)
 	renderer.RenderTextAt(buffer, float32(left), float32(top), config)

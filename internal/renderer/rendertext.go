@@ -27,6 +27,7 @@ func RenderTextAt(buffer *ascii.Buffer, left, top float32, config Config) {
 				x,
 				y,
 				cell.Rune,
+				cell.Color,
 				cell.Brightness,
 				config,
 				transform,
@@ -67,7 +68,7 @@ func RenderTextLine(
 
 	for x, r := range runes {
 		if r != ' ' {
-			appendTextGlyph(x, 0, r, 1, config, transform)
+			appendTextGlyph(x, 0, r, ascii.RGB(0xFFFFFF), 1, config, transform)
 		}
 	}
 
@@ -78,6 +79,7 @@ func RenderTextLine(
 func appendTextGlyph(
 	cellX, cellY int,
 	r rune,
+	color ascii.Color,
 	brightness float32,
 	config Config,
 	transform func(float32, float32) (float32, float32),
@@ -97,6 +99,11 @@ func appendTextGlyph(
 		glyphHeight = config.CellHeight
 	}
 
+	// Apply brightness once per glyph, preserving its color.
+	color.R *= brightness
+	color.G *= brightness
+	color.B *= brightness
+
 	left := float32(cellX * config.CellWidth)
 	top := float32(cellY * config.CellHeight)
 	right := left + float32(glyphWidth)
@@ -106,7 +113,7 @@ func appendTextGlyph(
 		if transform != nil {
 			x, y = transform(x, y)
 		}
-		appendTextVertex(x, y, u, v, brightness, config)
+		appendTextVertex(x, y, u, v, color, config)
 	}
 
 	vertex(left, top, uv.Left, uv.Top)
