@@ -1,6 +1,9 @@
 package renderer
 
-import "github.com/go-gl/gl/v3.2-compatibility/gl"
+import (
+	"github.com/andrlzpt/dim/internal/ascii"
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
+)
 
 const textVertexFloats = 7 // X, Y, U, V, R, G, B.
 
@@ -19,7 +22,8 @@ func beginTextBatch() {
 }
 
 func appendTextVertex(
-	x, y, u, v, brightness float32,
+	x, y, u, v float32,
+	color ascii.Color,
 	config Config,
 ) {
 	textVertices = append(
@@ -28,9 +32,9 @@ func appendTextVertex(
 		pixelToClipY(y, config),
 		u,
 		v,
-		brightness,
-		brightness,
-		brightness,
+		color.R,
+		color.G,
+		color.B,
 	)
 }
 

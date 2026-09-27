@@ -4,6 +4,7 @@ import "math/rand"
 
 type Cell struct {
 	Rune       rune
+	Color      Color
 	Brightness float32
 }
 
@@ -28,12 +29,23 @@ func (b *Buffer) Set(x, y int, r rune) {
 
 // SetShaded writes a character with brightness between zero and one.
 func (b *Buffer) SetShaded(x, y int, r rune, brightness float32) {
+	b.SetColored(x, y, r, RGB(0xFFFFFF), brightness)
+}
+
+// SetColored writes a colored character with independent brightness.
+func (b *Buffer) SetColored(
+	x, y int,
+	r rune,
+	color Color,
+	brightness float32,
+) {
 	if !b.inBounds(x, y) {
 		return
 	}
 
 	b.Cells[b.index(x, y)] = Cell{
 		Rune:       r,
+		Color:      color,
 		Brightness: max(float32(0), min(brightness, float32(1))),
 	}
 }

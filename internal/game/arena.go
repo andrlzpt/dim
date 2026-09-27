@@ -16,9 +16,11 @@ type Camera struct {
 type Arena struct {
 	Camera Camera
 
-	seed         int64
-	chunks       map[chunkPosition]chunk
-	loadedCenter chunkPosition
+	seed            int64
+	chunks          map[chunkPosition]chunk
+	loadedCenter    chunkPosition
+	checkpoints     map[string]Checkpoint
+	discoveredRooms map[RoomID]RoomDiscovery
 }
 
 func NewArena(seed int64) Arena {
@@ -31,6 +33,7 @@ func NewArena(seed int64) Arena {
 		chunks: make(map[chunkPosition]chunk),
 	}
 	arena.loadNearbyChunks()
+	arena.discoverCurrentRoom()
 
 	return arena
 }

@@ -43,13 +43,19 @@ type AppState struct {
 	Height            int
 	FramebufferWidth  int
 	FramebufferHeight int
+	Minimap           MinimapConfig
 
 	surfaceRows []surfaceRow
+	minimapText *ascii.Buffer
 }
 
 func main() {
 	runtime.LockOSThread()
-	app := AppState{Screen: ScreenMain}
+	app := AppState{
+		Screen:  ScreenMain,
+		Minimap: defaultMinimapConfig(),
+	}
+
 	var world, text *ascii.Buffer
 
 	window.Run(window.Config{
